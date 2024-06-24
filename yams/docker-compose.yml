@@ -1,0 +1,177 @@
+version: "3.8"
+
+networks:
+  proxy:
+    external: true
+
+services:
+  bazarr:
+    container_name: yams-bazarr
+    image: lscr.io/linuxserver/bazarr:latest
+    volumes:
+      - ./bazarr:/config
+      - $NAS_PATH/media/tv:/tv
+      - $NAS_PATH/media/movies:/movies
+    environment:
+      #- PUID=10000
+      #- PGID=10000
+      - TZ=Europe/Paris
+    ports:
+      - 6767:6767
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bazarr.rule=Host(`bazarr.media.internal`)"
+      - "traefik.http.routers.bazarr.service=bazarr-serv"
+      - "traefik.http.services.bazarr-serv.loadbalancer.server.port=6767"
+    networks:
+      - proxy
+
+  # Services to fetch indexers & index indexers ...
+  prowlarr:
+    container_name: yams-prowlarr
+    image: lscr.io/linuxserver/prowlarr:latest
+    volumes:
+      - ./prowlarr:/config
+    environment:
+      #- PUID=10000
+      #- PGID=10000
+      - TZ=Europe/Paris
+    ports:
+      - 9696:9696
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.media.internal`)"
+      - "traefik.http.routers.prowlarr.service=prowlarr-serv"
+      - "traefik.http.services.prowlarr-serv.loadbalancer.server.port=9696"
+      # TLS/websecure entrypoint      
+      #- "traefik.http.routers.prowlarr.entrypoints=websecure"
+      #- "traefik.http.routers.prowlarr.tls=true"
+      #- "traefik.http.routers.prowlarr.tls.certresolver=myresolver"
+    networks:
+      - proxy
+
+  sonarr:
+    container_name: yams-sonarr
+    image: lscr.io/linuxserver/sonarr:latest
+    volumes:
+      - ./sonarr:/config
+      - $NAS_PATH/media/tv:/tv
+      - $NAS_PATH/torrents:/downloads
+    environment:
+      #- PUID=10000
+      #- PGID=10000
+      - TZ=Europe/Paris
+    ports:
+      - 8989:8989
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sonarr.rule=Host(`sonarr.media.internal`)"
+      - "traefik.http.routers.sonarr.service=sonarr-serv"
+      - "traefik.http.services.sonarr-serv.loadbalancer.server.port=8989"
+      # TLS/websecure entrypoint
+      #- "traefik.http.routers.sonarr.entrypoints=websecure"
+      #- "traefik.http.routers.sonarr.tls=true"
+      #- "traefik.http.routers.sonarr.tls.certresolver=myresolver"
+    networks:
+      - proxy
+
+  radarr:
+    container_name: yams-radarr
+    image: lscr.io/linuxserver/radarr:latest
+    volumes:
+      - ./radarr:/config
+      - $NAS_PATH/media/movies:/movies
+      - $NAS_PATH/torrents:/downloads
+    environment:
+      #- PUID=10000
+      #- PGID=10000
+      - TZ=Europe/Paris
+    ports:
+      - 7878:7878
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.radarr.rule=Host(`radarr.media.internal`)"
+      - "traefik.http.routers.radarr.service=radarr-serv"
+      - "traefik.http.services.radarr-serv.loadbalancer.server.port=7878"
+      # TLS/websecure entrypoint
+      #- "traefik.http.routers.radarr.entrypoints=websecure"
+      #- "traefik.http.routers.radarr.tls=true"
+      #- "traefik.http.routers.radarr.tls.certresolver=myresolver"
+    networks:
+      - proxy
+
+  # Services to manage requests for Jellyfin (media lib)
+  jellyseerr:
+    container_name: yams-jellyseerr
+    image: fallenbagel/jellyseerr:latest
+    volumes:
+      - ./jellyseerr:/app/config
+    environment:
+      - LOG_LEVEL=debug
+      - TZ=Europe/Paris
+    ports:
+      - 5055:5055
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jellyseerr.rule=Host(`jellyseerr.media.internal`)"
+      - "traefik.http.routers.jellyseerr.service=jellyseerr-serv"
+      - "traefik.http.services.jellyseerr-serv.loadbalancer.server.port=5055"
+      # TLS/websecure entrypoint
+      #- "traefik.http.routers.jellyseerr.entrypoints=websecure"
+      #- "traefik.http.routers.jellyseerr.tls=true"
+      #- "traefik.http.routers.jellyseerr.tls.certresolver=myresolver"
+    networks:
+      - proxy
+
+  #unmanic:
+  #  container_name: yams-unmanic
+  #  image: josh5/unmanic:latest
+  #  ports:
+  #    - 8888:8888
+    #environment:
+      # - PUID=10000
+      # - GUID=10000
+  #  volumes:
+  #    - ./unmanic:/config
+  #    - $NAS_PATH/media:/library
+  #    - ./unmanic-cache:/tmp/unmanic
+  #  restart: unless-stopped
+  #  labels:
+  #    - "traefik.enable=true"
+  #    - "traefik.http.routers.unmanic.rule=Host(`unmanic.media.internal`)"
+  #    - "traefik.http.routers.unmanic.service=unmanic-serv"
+  #    - "traefik.http.services.unmanic-serv.loadbalancer.server.port=8888"
+  #  networks:
+  #    - proxy
+
+  # Jellyfin | migrated to separate LXC
+  # jellyfin:
+  #  container_name: yams-jellyfin
+  #  image: jellyfin/jellyfin
+  #  volumes:
+  #    - ./jellyfin:/config
+  #    - /mnt/nas/tv:/data/tvshows
+  #    - /mnt/nas/movies:/data/movies
+  #  environment:
+  #    #- PUID=10000
+  #    #- PGID=10000
+  #    - TZ=Europe/Paris
+  #  ports:
+  #    - 8096:8096
+  #  restart: unless-stopped
+  #  labels:
+  #    - "traefik.enable=true"
+  #    - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.media.internal`)"
+  #    - "traefik.http.routers.jellyfin.service=jellyfin-serv"
+  #    - "traefik.http.services.jellyfin-serv.loadbalancer.server.port=8096"
+      # TLS/websecure entrypoint
+      #- "traefik.http.routers.jellyfin.entrypoints=websecure"
+      #- "traefik.http.routers.jellyfin.tls=true"
+      #- "traefik.http.routers.jellyfin.tls.certresolver=myresolver"
+  #  networks:
+  #   - proxy

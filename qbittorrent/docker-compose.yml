@@ -1,0 +1,22 @@
+version: "3"
+services:
+  qbittorrent:
+    image: ghcr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      #- PUID=10000
+      #- PGID=10000
+      - TZ=Europe/Paris
+      - WEBUI_PORT=6011
+    volumes:
+      - ./config:/config
+      - $NAS_PATH/torrents:/downloads
+    network_mode: "container:gluetun_vpn"
+    #change gluetun to your VPN container name   
+    #network_mode: "service:your_gluetun_service_name" #change gluetun to your VPN service name  
+    # ports: #you wont need the ports in this configuration file, you will need to include them in the Gluetun container
+    #   - 6081:6881
+    #   - 6081:6881/udp
+    #   - 6011:6011  
+    restart: unless-stopped
+

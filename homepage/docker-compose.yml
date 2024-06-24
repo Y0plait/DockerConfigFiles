@@ -1,0 +1,32 @@
+#version: "3.8"
+networks:
+  proxy:
+    external: true
+
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    #environment:
+      #- PUID=1000
+      #- PGID=1000
+    ports:
+      - 3000:3000
+    volumes:
+      - ./config:/app/config # Make sure your local config directory exists
+      - /var/run/docker.sock:/var/run/docker.sock:ro # optional, for docker integrations
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.homepage.rule=Host(`homepage.docker.internal`)"
+      - "traefik.http.routers.homepage.service=homepage-serv"
+      - "traefik.http.services.homepage-serv.loadbalancer.server.port=3000"
+      # TLS/websecure 
+      #- "traefik.http.routers.homepage.entrypoints=websecure"
+      #- "traefik.http.routers.homepage.tls=true"
+      #- "traefik.http.routers.homepage.tls.certresolver=myresolver"
+    networks:
+      - proxy
+    dns:
+      - 192.168.10.253
+
