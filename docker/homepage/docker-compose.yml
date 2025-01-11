@@ -22,11 +22,10 @@ services:
       - "traefik.http.routers.homepage.service=homepage-serv"
       - "traefik.http.services.homepage-serv.loadbalancer.server.port=3000"
       # TLS/websecure 
-      #- "traefik.http.routers.homepage.entrypoints=websecure"
-      #- "traefik.http.routers.homepage.tls=true"
-      #- "traefik.http.routers.homepage.tls.certresolver=myresolver"
+      - "traefik.http.routers.homepage.entrypoints=websecure"
+      - "traefik.http.routers.homepage.tls=true"
     networks:
       - proxy
     dns:
-      - 192.168.10.253
+      - 192.168.10.2
 

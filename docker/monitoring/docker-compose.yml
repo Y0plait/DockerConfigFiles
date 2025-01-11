@@ -14,6 +14,8 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.dozzle.rule=Host(`dozzle.docker.internal`)"
+      - "traefik.http.routers.dozzle.tls=true"
+      - "traefik.http.routers.dozzle.entrypoints=websecure"
       - "traefik.http.routers.dozzle.service=dozzle-serv"
       - "traefik.http.services.dozzle-serv.loadbalancer.server.port=8080"
     networks:
@@ -50,28 +52,10 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.uptime-kuma.rule=Host(`uptime.docker.internal`)"
+      - "traefik.http.routers.uptime-kuma.tls=true"
+      - "traefik.http.routers.uptime-kuma.entrypoints=websecure"
       - "traefik.http.routers.uptime-kuma.service=uptime-kuma-serv"
       - "traefik.http.services.uptime-kuma-serv.loadbalancer.server.port=3001"
     networks:
       - proxy
     restart: unless-stopped
-
-#  watchyourlan:
-#    image: aceberg/watchyourlan
-#    container_name: watchyourlan
-#    volumes:
-#      - ./watchyourlan:/data
-#    environment:
-#      - IFACE=ens18
-#      - TZ=UTC
-#    ports:
-#      - 8840:8840
-#    restart: unless-stopped
-#    labels:
-#      - "traefik.enable=true"
-#      - "traefik.http.routers.watchyourlan.rule=Host(`wyl.docker.internal`)"
-#      - "traefik.http.routers.watchyourlan.service=watchyourlan-serv"
-#      - "traefik.http.services.watchyourlan-serv.loadbalancer.server.port=8840"
-#    network_mode: "host"
-#    #networks:
-    #  - proxy

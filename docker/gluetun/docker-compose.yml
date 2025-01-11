@@ -1,0 +1,65 @@
+version: "3"
+
+networks:
+  proxy:
+    external: true
+
+services:
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun_vpn
+    cap_add:
+      - NET_ADMIN
+    ports: #make sure to include these for qbittorrent to work
+      - 6081:6881
+      - 6081:6881/udp
+      - 6011:6011
+      # - 9696:9696
+    environment:
+      - VPN_SERVICE_PROVIDER=private internet access
+      - OPENVPN_USER=p9093145
+      - OPENVPN_PASSWORD=]VkrNm"bEz3BF8,
+      - SERVER_REGIONS=Malta
+    volumes:
+      - ./gluetun_config:/gluetun
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      # qBittorrent
+      - "traefik.http.routers.gluetun.rule=Host(`qbittorrent.docker.internal`)"
+      - "traefik.http.routers.gluetun.service=qbittorrent-serv"
+      - "traefik.http.services.qbittorrent-serv.loadbalancer.server.port=6011"
+      # TLS/websecure entrypoint      
+      - "traefik.http.routers.qbittorrent.entrypoints=websecure"
+      - "traefik.http.routers.qbittorrent.tls=true"
+      # Prowlarr
+      # - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.media.internal`)"
+      # - "traefik.http.routers.prowlarr.service=prowlarr-serv"
+      # - "traefik.http.services.prowlarr-serv.loadbalancer.server.port=9696"
+      # # TLS/websecure entrypoint      
+      # - "traefik.http.routers.prowlarr.entrypoints=websecure"
+      # - "traefik.http.routers.prowlarr.tls=true"
+    networks:
+      - proxy
+
+  qbittorrent:
+    image: ghcr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      #- PUID=10000
+      #- PGID=10000
+      - TZ=Europe/Paris
+      - WEBUI_PORT=6011
+    volumes:
+      - ./config:/config
+      - $NAS_PATH/torrents:/downloads
+    network_mode: "container:gluetun_vpn"
+    #change gluetun to your VPN container name   
+    #network_mode: "service:your_gluetun_service_name" #change gluetun to your VPN service name  
+    # ports: #you wont need the ports in this configuration file, you will need to include them in the Gluetun container
+    #   - 6081:6881
+    #   - 6081:6881/udp
+    #   - 6011:6011  
+    restart: unless-stopped
+    depends_on:
+      - gluetun
