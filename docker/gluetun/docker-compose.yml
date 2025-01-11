@@ -16,10 +16,10 @@ services:
       - 6011:6011
       # - 9696:9696
     environment:
-      - VPN_SERVICE_PROVIDER=private internet access
-      - OPENVPN_USER=p9093145
-      - OPENVPN_PASSWORD=]VkrNm"bEz3BF8,
-      - SERVER_REGIONS=Malta
+      - VPN_SERVICE_PROVIDER=
+      - OPENVPN_USER=
+      - OPENVPN_PASSWORD=
+      - SERVER_REGIONS=
     volumes:
       - ./gluetun_config:/gluetun
     restart: unless-stopped
